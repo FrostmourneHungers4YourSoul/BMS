@@ -5,7 +5,9 @@ import com.example.bookmanagementservice.exception.ResourceAlreadyExistsExceptio
 import com.example.bookmanagementservice.exception.ResourceNotFoundException;
 import com.example.bookmanagementservice.mapper.AuthorMapper;
 import com.example.bookmanagementservice.model.Author;
+import com.example.bookmanagementservice.model.Book;
 import com.example.bookmanagementservice.model.dto.request.AuthorRequestDto;
+import com.example.bookmanagementservice.model.dto.response.AuthorBooksResponseDto;
 import com.example.bookmanagementservice.model.dto.response.AuthorResponseDto;
 import com.example.bookmanagementservice.model.dto.response.BookResponseDto;
 import com.example.bookmanagementservice.repository.AuthorRepository;
@@ -58,8 +60,8 @@ class AuthorServiceImplTest extends BaseUnitTest {
                 .birthYear(1821)
                 .build();
 
-        AuthorResponseDto dto1 = new AuthorResponseDto(1L, "Толстой Л.Н.", 1828, List.of());
-        AuthorResponseDto dto2 = new AuthorResponseDto(2L, "Достоевский Ф.М.", 1821, List.of());
+        AuthorResponseDto dto1 = new AuthorResponseDto(1L, "Толстой Л.Н.", 1828);
+        AuthorResponseDto dto2 = new AuthorResponseDto(2L, "Достоевский Ф.М.", 1821);
 
         Page<Author> authorPage = new PageImpl<>(List.of(author1, author2), pageable, 2);
 
@@ -82,7 +84,7 @@ class AuthorServiceImplTest extends BaseUnitTest {
     @DisplayName("Успешно находит автора по id")
     void testSuccessfullyGetAuthorById() {
         Long id = 1L;
-        BookResponseDto bookDto = new BookResponseDto(id, "Высоконагруженные приложения.", 2017, "Техническая литература");
+        BookResponseDto bookDto = new BookResponseDto(1L, "Высоконагруженные приложения.", id, 2017, "Техническая литература");
         List<BookResponseDto> books = List.of(bookDto);
 
         Author author = Author.builder()
@@ -91,18 +93,28 @@ class AuthorServiceImplTest extends BaseUnitTest {
                 .birthYear(1982)
                 .build();
 
-        AuthorResponseDto authorDto = new AuthorResponseDto(author.getId(), author.getName(), author.getBirthYear(), books);
+        Book book = Book.builder()
+                .id(id)
+                .title("Высоконагруженные приложения.")
+                .author(author)
+                .year(2017)
+                .genre("Техническая литература")
+                .build();
+
+        author.setBooks(List.of(book));
+
+        AuthorBooksResponseDto authorDto = new AuthorBooksResponseDto(author.getId(), author.getName(), author.getBirthYear(), books);
 
         when(repository.findById(id)).thenReturn(Optional.of(author));
-        when(mapper.toDto(author)).thenReturn(authorDto);
+        when(mapper.toAuthorBooksResponseDto(author)).thenReturn(authorDto);
 
-        AuthorResponseDto result = service.getAuthor(id);
+        AuthorBooksResponseDto result = service.getAuthor(id);
 
         assertNotNull(result);
         assertEquals(authorDto, result);
 
         verify(repository).findById(1L);
-        verify(mapper, times(1)).toDto(author);
+        verify(mapper, times(1)).toAuthorBooksResponseDto(author);
     }
 
     @Test
@@ -117,10 +129,7 @@ class AuthorServiceImplTest extends BaseUnitTest {
                 .birthYear(1982)
                 .build();
 
-        BookResponseDto bookDto = new BookResponseDto(id, "Высоконагруженные приложения.", 2017, "Техническая литература");
-        List<BookResponseDto> books = List.of(bookDto);
-
-        AuthorResponseDto responseDto = new AuthorResponseDto(savedAuthor.getId(), savedAuthor.getName(), savedAuthor.getBirthYear(), books);
+        AuthorResponseDto responseDto = new AuthorResponseDto(savedAuthor.getId(), savedAuthor.getName(), savedAuthor.getBirthYear());
 
         Author mappedAuthor = Author.builder()
                 .name("Martin K.")
@@ -147,11 +156,11 @@ class AuthorServiceImplTest extends BaseUnitTest {
     void testThrowWhenGettingAuthorById() {
         when(repository.findById(1L)).thenReturn(Optional.empty());
 
-        ResourceNotFoundException exception = assertThrows(ResourceNotFoundException.class, () -> {
-            service.getAuthor(1L);
-        });
+        ResourceNotFoundException exception = assertThrows(
+                ResourceNotFoundException.class, () -> service.getAuthor(1L)
+        );
 
-        assertEquals("Author not found", exception.getMessage());
+        assertEquals("Author not found.", exception.getMessage());
         verify(repository).findById(1L);
     }
 
@@ -168,9 +177,9 @@ class AuthorServiceImplTest extends BaseUnitTest {
         when(repository.save(author))
                 .thenThrow(new DataIntegrityViolationException("Duplicate author name"));
 
-        ResourceAlreadyExistsException exception = assertThrows(ResourceAlreadyExistsException.class, () -> {
-            service.createAuthor(requestDto);
-        });
+        ResourceAlreadyExistsException exception = assertThrows(
+                ResourceAlreadyExistsException.class, () -> service.createAuthor(requestDto)
+        );
 
         assertEquals("Author with name already exists: " + author.getName(), exception.getMessage());
 

@@ -1,6 +1,8 @@
 package com.example.bookmanagementservice.service;
 
+import com.example.bookmanagementservice.model.Author;
 import com.example.bookmanagementservice.model.dto.request.AuthorRequestDto;
+import com.example.bookmanagementservice.model.dto.response.AuthorBooksResponseDto;
 import com.example.bookmanagementservice.model.dto.response.AuthorResponseDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -10,5 +12,7 @@ public interface AuthorService {
 
     AuthorResponseDto createAuthor(AuthorRequestDto author);
 
-    AuthorResponseDto getAuthor(Long id);
+    AuthorBooksResponseDto getAuthor(Long id);
+
+    Author getAuthorById(Long id);
 }
