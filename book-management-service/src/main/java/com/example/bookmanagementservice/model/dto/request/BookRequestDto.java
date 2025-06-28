@@ -1,12 +1,12 @@
 package com.example.bookmanagementservice.model.dto.request;
 
-import com.example.bookmanagementservice.model.Author;
-import jakarta.validation.constraints.NotNull;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import jakarta.validation.constraints.NotBlank;
 
 public record BookRequestDto
         (
-                @NotNull String title,
-                Author author,
+                @NotBlank String title,
+                @JsonProperty("author_id") Long authorId,
                 Integer year,
                 String genre
         ) {

@@ -1,6 +1,10 @@
 package com.example.bookmanagementservice.controller;
 
+import com.example.bookmanagementservice.model.dto.request.BookRequestDto;
+import com.example.bookmanagementservice.model.dto.response.BookResponseDto;
+import com.example.bookmanagementservice.model.dto.response.ResponseMessage;
 import com.example.bookmanagementservice.service.BookService;
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -20,28 +24,28 @@ import java.util.List;
 public class BookController {
     private final BookService bookService;
 
-    @PostMapping
-    public ResponseEntity<String> create(@RequestBody String book) {
-        return null;
+    @PostMapping()
+    public ResponseEntity<BookResponseDto> create(@RequestBody @Valid BookRequestDto book) {
+        return ResponseEntity.ok(bookService.createBook(book));
     }
 
-    @GetMapping
-    public ResponseEntity<List<String>> getBooks() {
-        return null;
+    @GetMapping()
+    public ResponseEntity<List<BookResponseDto>> getBooks() {
+        return ResponseEntity.ok(bookService.getBooks());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<String> getBook(@PathVariable String id) {
-        return null;
+    public ResponseEntity<BookResponseDto> getBook(@PathVariable Long id) {
+        return ResponseEntity.ok(bookService.getBook(id));
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<String> update(@PathVariable Long id, @RequestBody String book){
-        return null;
+    public ResponseEntity<BookResponseDto> update(@PathVariable Long id, @RequestBody @Valid BookRequestDto book){
+        return ResponseEntity.ok(bookService.updateBook(id, book));
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<String> delete(@PathVariable Long id) {
-        return null;
+    public ResponseEntity<ResponseMessage> delete(@PathVariable Long id) {
+        return ResponseEntity.ok(bookService.removeBook(id));
     }
 }

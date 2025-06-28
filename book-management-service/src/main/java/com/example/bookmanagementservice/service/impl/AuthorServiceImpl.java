@@ -5,6 +5,7 @@ import com.example.bookmanagementservice.exception.ResourceNotFoundException;
 import com.example.bookmanagementservice.mapper.AuthorMapper;
 import com.example.bookmanagementservice.model.Author;
 import com.example.bookmanagementservice.model.dto.request.AuthorRequestDto;
+import com.example.bookmanagementservice.model.dto.response.AuthorBooksResponseDto;
 import com.example.bookmanagementservice.model.dto.response.AuthorResponseDto;
 import com.example.bookmanagementservice.repository.AuthorRepository;
 import com.example.bookmanagementservice.service.AuthorService;
@@ -35,11 +36,11 @@ public class AuthorServiceImpl implements AuthorService {
     }
 
     @Override
-    public AuthorResponseDto getAuthor(Long id) {
+    public AuthorBooksResponseDto getAuthor(Long id) {
         Author author = repository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Author not found"));
+                .orElseThrow(() -> new ResourceNotFoundException("Author not found."));
         log.info("Found author: {}", author);
-        return mapper.toDto(author);
+        return mapper.toAuthorBooksResponseDto(author);
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW,
@@ -55,5 +56,11 @@ public class AuthorServiceImpl implements AuthorService {
             log.warn("Duplicate author name: {}", author.name());
             throw new ResourceAlreadyExistsException("Author with name already exists: " + author.name());
         }
+    }
+
+    @Override
+    public Author getAuthorById(Long id) {
+        return repository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Author not found."));
     }
 }
