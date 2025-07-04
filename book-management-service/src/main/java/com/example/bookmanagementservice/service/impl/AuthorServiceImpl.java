@@ -9,7 +9,7 @@ import com.example.bookmanagementservice.model.dto.response.AuthorBooksResponseD
 import com.example.bookmanagementservice.model.dto.response.AuthorResponseDto;
 import com.example.bookmanagementservice.repository.AuthorRepository;
 import com.example.bookmanagementservice.service.AuthorService;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
@@ -21,8 +21,8 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
-@AllArgsConstructor
 @Service
+@RequiredArgsConstructor
 public class AuthorServiceImpl implements AuthorService {
 
     private final AuthorRepository repository;
