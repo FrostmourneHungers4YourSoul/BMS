@@ -11,7 +11,7 @@ import com.example.bookmanagementservice.model.dto.response.ResponseMessage;
 import com.example.bookmanagementservice.repository.BookRepository;
 import com.example.bookmanagementservice.service.AuthorService;
 import com.example.bookmanagementservice.service.BookService;
-import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
@@ -22,16 +22,16 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 @Slf4j
-@AllArgsConstructor
 @Service
+@RequiredArgsConstructor
 public class BookServiceImpl implements BookService {
     private final BookRepository repository;
     private final AuthorService authorService;
     private final BookMapper mapper;
 
+    @Override
     @Transactional(propagation = Propagation.REQUIRES_NEW,
             isolation = Isolation.READ_COMMITTED)
-    @Override
     public BookResponseDto createBook(BookRequestDto requestDto) {
         Book newBook = mapper.toEntity(requestDto);
 
@@ -61,14 +61,14 @@ public class BookServiceImpl implements BookService {
     @Override
     public BookResponseDto getBook(Long id) {
         Book book = repository.findById(id)
-                .orElseThrow(()-> new ResourceNotFoundException("Book not found."));
+                .orElseThrow(() -> new ResourceNotFoundException("Book not found."));
         log.info("Found book: {}", book);
         return mapper.toDto(book);
     }
 
+    @Override
     @Transactional(propagation = Propagation.REQUIRES_NEW,
             isolation = Isolation.READ_COMMITTED)
-    @Override
     public BookResponseDto updateBook(Long id, BookRequestDto requestDto) {
         if (!repository.existsById(id))
             throw new ResourceNotFoundException("Book not found.");
@@ -76,7 +76,7 @@ public class BookServiceImpl implements BookService {
         Author author = authorService.getAuthorById(requestDto.authorId());
 
         Book updatingBook = repository.findById(id)
-                .orElseThrow(()-> new ResourceNotFoundException("Book not found."));
+                .orElseThrow(() -> new ResourceNotFoundException("Book not found."));
 
         Book updatedBook = Book.builder()
                 .id(updatingBook.getId())
@@ -96,7 +96,7 @@ public class BookServiceImpl implements BookService {
     @Override
     public ResponseMessage removeBook(Long id) {
         Book book = repository.findById(id)
-                .orElseThrow(()-> new ResourceNotFoundException("Book not found."));
+                .orElseThrow(() -> new ResourceNotFoundException("Book not found."));
         repository.removeById(id);
         log.info("Has been removed: {}", book.getTitle());
         return new ResponseMessage("Book '" + book.getTitle() + "' has been removed.");

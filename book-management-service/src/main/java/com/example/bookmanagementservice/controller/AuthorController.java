@@ -3,10 +3,14 @@ package com.example.bookmanagementservice.controller;
 import com.example.bookmanagementservice.model.dto.request.AuthorRequestDto;
 import com.example.bookmanagementservice.model.dto.response.AuthorBooksResponseDto;
 import com.example.bookmanagementservice.model.dto.response.AuthorResponseDto;
-import com.example.bookmanagementservice.service.AuthorService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.Parameters;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
-import lombok.AllArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -14,28 +18,34 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
 
-@AllArgsConstructor
-@RestController
 @RequestMapping("/authors")
-public class AuthorController {
-    private final AuthorService authorService;
+@Tag(name = "Authors API", description = "Управление авторами")
+public interface AuthorController {
 
-    @PostMapping()
-    public ResponseEntity<AuthorResponseDto> create(@RequestBody @Valid AuthorRequestDto author) {
-        return ResponseEntity.ok(authorService.createAuthor(author));
-    }
+    @Operation(summary = "Создать нового автора")
+    @PostMapping
+    ResponseEntity<AuthorResponseDto> create(
+            @RequestBody(description = "Данные нового автора")
+            @Valid AuthorRequestDto author);
 
+    @Operation(summary = "Получить автора по ID")
+    @ApiResponse(responseCode = "200", description = "Автор найден")
+    @ApiResponse(responseCode = "404", description = "Автор не найден")
     @GetMapping("/{id}")
-    public ResponseEntity<AuthorBooksResponseDto> getAuthor(@PathVariable Long id) {
-        return ResponseEntity.ok(authorService.getAuthor(id));
-    }
+    ResponseEntity<AuthorBooksResponseDto> getAuthor(
+            @Parameter(description = "ID автора")
+            @PathVariable Long id);
 
-    @GetMapping()
-    public ResponseEntity<Page<AuthorResponseDto>> getAuthors(@PageableDefault @NotNull Pageable pageable) {
-        return ResponseEntity.ok(authorService.getAllAuthors(pageable));
-    }
+    @Operation(summary = "Получить список авторов с пагинацией")
+    @Parameters({
+            @Parameter(name = "page", description = "Номер страницы (min = 0)", example = "0"),
+            @Parameter(name = "size", description = "Количество элементов (default = 10)", example = "10"),
+            @Parameter(name = "sort", description = "Сортировка (name,asc)", example = "name,asc")
+    })
+    @GetMapping
+    ResponseEntity<Page<AuthorResponseDto>> getAuthors(
+            @Parameter(hidden = true)
+            @PageableDefault @NotNull Pageable pageable);
 }

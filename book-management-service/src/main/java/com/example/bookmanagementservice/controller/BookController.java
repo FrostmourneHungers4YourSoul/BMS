@@ -3,49 +3,57 @@ package com.example.bookmanagementservice.controller;
 import com.example.bookmanagementservice.model.dto.request.BookRequestDto;
 import com.example.bookmanagementservice.model.dto.response.BookResponseDto;
 import com.example.bookmanagementservice.model.dto.response.ResponseMessage;
-import com.example.bookmanagementservice.service.BookService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
-import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import io.swagger.v3.oas.annotations.parameters.RequestBody;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-@AllArgsConstructor
-@RestController
+@Tag(name = "Books API", description = "Управление книгами")
 @RequestMapping("/books")
-public class BookController {
-    private final BookService bookService;
+public interface BookController {
 
-    @PostMapping()
-    public ResponseEntity<BookResponseDto> create(@RequestBody @Valid BookRequestDto book) {
-        return ResponseEntity.ok(bookService.createBook(book));
-    }
+    @Operation(summary = "Создать новую книгу")
+    @PostMapping
+    ResponseEntity<BookResponseDto> create(
+            @RequestBody(description = "Данные новой книги")
+            @Valid BookRequestDto book);
 
-    @GetMapping()
-    public ResponseEntity<List<BookResponseDto>> getBooks() {
-        return ResponseEntity.ok(bookService.getBooks());
-    }
+    @Operation(summary = "Получить список книг")
+    @GetMapping
+    ResponseEntity<List<BookResponseDto>> getBooks();
 
+    @Operation(summary = "Получить книгу по ID")
+    @ApiResponse(responseCode = "200", description = "Книга найдена")
+    @ApiResponse(responseCode = "404", description = "Книга не найдена")
     @GetMapping("/{id}")
-    public ResponseEntity<BookResponseDto> getBook(@PathVariable Long id) {
-        return ResponseEntity.ok(bookService.getBook(id));
-    }
+    ResponseEntity<BookResponseDto> getBook(
+            @Parameter(description = "ID книги")
+            @PathVariable Long id);
 
+    @Operation(summary = "Обновить информацию о книге")
     @PutMapping("/{id}")
-    public ResponseEntity<BookResponseDto> update(@PathVariable Long id, @RequestBody @Valid BookRequestDto book){
-        return ResponseEntity.ok(bookService.updateBook(id, book));
-    }
+    ResponseEntity<BookResponseDto> update(
+            @Parameter(description = "ID книги")
+            @PathVariable Long id,
+            @RequestBody(description = "Новые данные книги")
+            @Valid BookRequestDto book);
 
+    @Operation(summary = "Удалить книгу")
+    @ApiResponse(responseCode = "200", description = "Книга удалена")
+    @ApiResponse(responseCode = "404", description = "Книга не найдена")
     @DeleteMapping("/{id}")
-    public ResponseEntity<ResponseMessage> delete(@PathVariable Long id) {
-        return ResponseEntity.ok(bookService.removeBook(id));
-    }
+    ResponseEntity<ResponseMessage> delete(
+            @Parameter(description = "ID книги")
+            @PathVariable Long id);
 }

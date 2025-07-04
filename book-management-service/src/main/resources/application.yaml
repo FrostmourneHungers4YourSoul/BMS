@@ -32,3 +32,8 @@ logging:
       springframework: INFO
       hibernate:
         sql: DEBUG
+
+springdoc:
+  swagger-ui:
+    config-url: /v3/api-docs/swagger-config
+    url: /v3/api-docs
