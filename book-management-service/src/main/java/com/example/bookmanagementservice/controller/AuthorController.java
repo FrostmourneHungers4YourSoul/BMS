@@ -1,7 +1,6 @@
 package com.example.bookmanagementservice.controller;
 
 import com.example.bookmanagementservice.model.dto.request.AuthorRequestDto;
-import com.example.bookmanagementservice.model.dto.response.AuthorBooksResponseDto;
 import com.example.bookmanagementservice.model.dto.response.AuthorResponseDto;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -34,7 +33,7 @@ public interface AuthorController {
     @ApiResponse(responseCode = "200", description = "Автор найден")
     @ApiResponse(responseCode = "404", description = "Автор не найден")
     @GetMapping("/{id}")
-    ResponseEntity<AuthorBooksResponseDto> getAuthor(
+    ResponseEntity<AuthorResponseDto> getAuthor(
             @Parameter(description = "ID автора")
             @PathVariable Long id);
 

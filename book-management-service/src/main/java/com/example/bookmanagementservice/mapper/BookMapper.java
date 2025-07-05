@@ -13,6 +13,7 @@ import org.mapstruct.NullValuePropertyMappingStrategy;
 )
 public interface BookMapper {
 
+    @Mapping(target = "id", ignore = true)
     @Mapping(target = "author", ignore = true)
     Book toEntity(BookRequestDto requestDto);
 

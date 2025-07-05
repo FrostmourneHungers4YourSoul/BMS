@@ -13,7 +13,6 @@ import com.example.bookmanagementservice.service.AuthorService;
 import com.example.bookmanagementservice.service.BookService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
@@ -33,22 +32,23 @@ public class BookServiceImpl implements BookService {
     @Transactional(propagation = Propagation.REQUIRES_NEW,
             isolation = Isolation.READ_COMMITTED)
     public BookResponseDto createBook(BookRequestDto requestDto) {
+        log.info("Request: {}", requestDto);
+
+        if (repository.existsByTitle(requestDto.title())) {
+            log.warn("Duplicate book title: {}", requestDto.title());
+            throw new ResourceAlreadyExistsException("Book with name is already exists: " + requestDto.title());
+        }
         Book newBook = mapper.toEntity(requestDto);
 
-        log.info("Request: {}", requestDto);
-        log.info("If: {}", requestDto.authorId() != null);
         if (requestDto.authorId() != null) {
             Author author = authorService.getAuthorById(requestDto.authorId());
             newBook.setAuthor(author);
         }
-        try {
-            Book book = repository.save(newBook);
-            log.info("Saved book: {}", book);
-            return mapper.toDto(book);
-        } catch (DataIntegrityViolationException ex) {
-            log.warn("Duplicate book title: {}", requestDto.title());
-            throw new ResourceAlreadyExistsException("Book with name is already exists: " + requestDto.title());
-        }
+
+        Book book = repository.save(newBook);
+        log.info("Saved book: {}", book);
+
+        return mapper.toDto(book);
     }
 
     @Override
@@ -88,6 +88,7 @@ public class BookServiceImpl implements BookService {
 
         Book book = repository.save(updatedBook);
         log.info("Book was updated: {}", book);
+
         return mapper.toDto(book);
     }
 
@@ -97,7 +98,9 @@ public class BookServiceImpl implements BookService {
     public ResponseMessage removeBook(Long id) {
         Book book = repository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Book not found."));
+
         repository.removeById(id);
+
         log.info("Has been removed: {}", book.getTitle());
         return new ResponseMessage("Book '" + book.getTitle() + "' has been removed.");
     }

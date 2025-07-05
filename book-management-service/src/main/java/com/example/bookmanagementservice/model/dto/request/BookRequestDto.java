@@ -21,7 +21,7 @@ public record BookRequestDto
                 @Schema(description = "Год публикации", example = "1869")
                 Integer year,
 
-                @Schema(description = "Жанр книги", example = "Роман")
+                @Schema(description = "Жанр книги", example = "Роман-эпопея")
                 String genre
         ) {
 }
