@@ -2,7 +2,6 @@ package com.example.bookmanagementservice.controller.impl;
 
 import com.example.bookmanagementservice.controller.AuthorController;
 import com.example.bookmanagementservice.model.dto.request.AuthorRequestDto;
-import com.example.bookmanagementservice.model.dto.response.AuthorBooksResponseDto;
 import com.example.bookmanagementservice.model.dto.response.AuthorResponseDto;
 import com.example.bookmanagementservice.service.AuthorService;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +23,7 @@ public class AuthorControllerImpl implements AuthorController {
     }
 
     @Override
-    public ResponseEntity<AuthorBooksResponseDto> getAuthor(Long id) {
+    public ResponseEntity<AuthorResponseDto> getAuthor(Long id) {
         return ResponseEntity.ok(authorService.getAuthor(id));
     }
 

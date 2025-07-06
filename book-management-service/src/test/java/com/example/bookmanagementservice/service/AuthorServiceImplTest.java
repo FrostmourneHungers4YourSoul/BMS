@@ -5,18 +5,15 @@ import com.example.bookmanagementservice.exception.ResourceAlreadyExistsExceptio
 import com.example.bookmanagementservice.exception.ResourceNotFoundException;
 import com.example.bookmanagementservice.mapper.AuthorMapper;
 import com.example.bookmanagementservice.model.Author;
-import com.example.bookmanagementservice.model.Book;
 import com.example.bookmanagementservice.model.dto.request.AuthorRequestDto;
-import com.example.bookmanagementservice.model.dto.response.AuthorBooksResponseDto;
 import com.example.bookmanagementservice.model.dto.response.AuthorResponseDto;
-import com.example.bookmanagementservice.model.dto.response.BookResponseDto;
 import com.example.bookmanagementservice.repository.AuthorRepository;
 import com.example.bookmanagementservice.service.impl.AuthorServiceImpl;
+import com.example.bookmanagementservice.util.AuthorUtil;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -25,11 +22,17 @@ import org.springframework.data.domain.Pageable;
 import java.util.List;
 import java.util.Optional;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
 
@@ -71,119 +74,111 @@ class AuthorServiceImplTest extends BaseUnitTest {
 
         Page<AuthorResponseDto> result = service.getAllAuthors(pageable);
 
-        assertNotNull(result);
-        assertEquals(2, result.getTotalElements());
-        assertEquals(List.of(dto1, dto2), result.getContent());
+        assertThat(result)
+                .isNotNull()
+                .isNotEmpty();
+
+        assertThat(result.getContent())
+                .hasSize(2)
+                .containsExactly(dto1, dto2);
 
         verify(repository).findAll(pageable);
-        verify(mapper).toDto(author1);
-        verify(mapper).toDto(author2);
+        verify(mapper, times(2)).toDto(any(Author.class));
     }
 
     @Test
     @DisplayName("Успешно находит автора по id")
     void testSuccessfullyGetAuthorById() {
-        Long id = 1L;
-        BookResponseDto bookDto = new BookResponseDto(1L, "Высоконагруженные приложения.", id, 2017, "Техническая литература");
-        List<BookResponseDto> books = List.of(bookDto);
+        //given
+        when(repository.findById(anyLong())).thenReturn(Optional.ofNullable(AuthorUtil.getAuthorPersisted()));
+        when(mapper.toDto(any(Author.class))).thenReturn(AuthorUtil.getAuthorResponse());
 
-        Author author = Author.builder()
-                .id(id)
-                .name("Martin K.")
-                .birthYear(1982)
-                .build();
+        //when
+        AuthorResponseDto result = service.getAuthor(99L);
 
-        Book book = Book.builder()
-                .id(id)
-                .title("Высоконагруженные приложения.")
-                .author(author)
-                .year(2017)
-                .genre("Техническая литература")
-                .build();
-
-        author.setBooks(List.of(book));
-
-        AuthorBooksResponseDto authorDto = new AuthorBooksResponseDto(author.getId(), author.getName(), author.getBirthYear(), books);
-
-        when(repository.findById(id)).thenReturn(Optional.of(author));
-        when(mapper.toAuthorBooksResponseDto(author)).thenReturn(authorDto);
-
-        AuthorBooksResponseDto result = service.getAuthor(id);
-
+        //then
         assertNotNull(result);
-        assertEquals(authorDto, result);
+        assertEquals("Martin K.", result.name());
 
-        verify(repository).findById(1L);
-        verify(mapper, times(1)).toAuthorBooksResponseDto(author);
+        verify(repository).findById(anyLong());
+        verify(mapper).toDto(any(Author.class));
     }
 
     @Test
     @DisplayName("Успешно создает автора")
     void testSuccessfullyCreateAuthor() {
-        Long id = 1L;
-        AuthorRequestDto requestDto = new AuthorRequestDto("Martin K.", 1982);
+        //given
+        AuthorResponseDto responseDto = AuthorUtil.getAuthorResponse();
 
-        Author savedAuthor = Author.builder()
-                .id(id)
-                .name("Martin K.")
-                .birthYear(1982)
-                .build();
+        when(mapper.toEntity(any(AuthorRequestDto.class))).thenReturn(AuthorUtil.getAuthorTransient());
+        when(repository.save(any(Author.class))).thenReturn(AuthorUtil.getAuthorPersisted());
+        when(mapper.toDto(any(Author.class))).thenReturn(responseDto);
 
-        AuthorResponseDto responseDto = new AuthorResponseDto(savedAuthor.getId(), savedAuthor.getName(), savedAuthor.getBirthYear());
+        //when
+        AuthorResponseDto result = service.createAuthor(AuthorUtil.getAuthorRequest());
 
-        Author mappedAuthor = Author.builder()
-                .name("Martin K.")
-                .birthYear(1982)
-                .build();
-
-        when(mapper.toEntity(requestDto)).thenReturn(mappedAuthor);
-        when(repository.save(mappedAuthor)).thenReturn(savedAuthor);
-        when(mapper.toDto(savedAuthor)).thenReturn(responseDto);
-
-        AuthorResponseDto result = service.createAuthor(requestDto);
-
+        //than
         assertNotNull(result);
-        assertEquals(1L, result.id());
+        assertEquals(99L, result.id());
         assertEquals(responseDto, result);
 
-        verify(mapper).toEntity(requestDto);
-        verify(repository).save(mappedAuthor);
-        verify(mapper).toDto(savedAuthor);
+        verify(mapper).toEntity(any(AuthorRequestDto.class));
+        verify(repository).save(any(Author.class));
+        verify(mapper).toDto(any(Author.class));
     }
 
     @Test
-    @DisplayName("Должен выбросить исключение пользователь не найден: ResourceNotFoundException")
+    @DisplayName("Должен выбросить исключение когда пользователь не найден: ResourceNotFoundException")
     void testThrowWhenGettingAuthorById() {
-        when(repository.findById(1L)).thenReturn(Optional.empty());
+        //given
+        when(repository.findById(anyLong())).thenReturn(Optional.empty());
 
+        //when
         ResourceNotFoundException exception = assertThrows(
                 ResourceNotFoundException.class, () -> service.getAuthor(1L)
         );
 
+        //then
         assertEquals("Author not found.", exception.getMessage());
-        verify(repository).findById(1L);
+
+        verify(repository).findById(anyLong());
+        verify(mapper, never()).toDto(any(Author.class));
     }
 
     @Test
     @DisplayName("Должен выбросить исключение дубликата: ResourceAlreadyExistsException")
     void testThrowWhenCreatingDuplicateAuthor() {
-        AuthorRequestDto requestDto = new AuthorRequestDto("Толстой Л.Н.", 1828);
-        Author author = Author.builder()
-                .name("Толстой Л.Н.")
-                .birthYear(1828)
-                .build();
+        //given
+        AuthorRequestDto requestDto = AuthorUtil.getAuthorRequest();
 
-        when(mapper.toEntity(requestDto)).thenReturn(author);
-        when(repository.save(author))
-                .thenThrow(new DataIntegrityViolationException("Duplicate author name"));
+        when(repository.existsByName(anyString())).thenReturn(true);
 
-        ResourceAlreadyExistsException exception = assertThrows(
+        //when
+        var exception = assertThrows(
                 ResourceAlreadyExistsException.class, () -> service.createAuthor(requestDto)
         );
 
-        assertEquals("Author with name already exists: " + author.getName(), exception.getMessage());
+        //than
+        assertEquals("Author [Martin K.] already exists.", exception.getMessage());
 
-        verify(mapper).toEntity(requestDto);
-        verify(repository).save(author);
+        verify(mapper, never()).toEntity(any(AuthorRequestDto.class));
+        verify(repository, never()).save(any(Author.class));
+    }
+
+    @Test
+    @DisplayName("Возвращает автора из репозитория по id")
+    void testSuccessfullyGetAuthorByIdFromRepository() {
+        //given
+        when(repository.findById(anyLong()))
+                .thenReturn(Optional.ofNullable(AuthorUtil.getAuthorPersisted()));
+
+        //when
+        Author result = service.getAuthorById(99L);
+
+        //than
+        assertNotNull(result);
+
+        verify(repository).findById(anyLong());
+        verifyNoMoreInteractions(repository);
     }
 }
